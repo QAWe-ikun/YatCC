@@ -707,10 +707,7 @@ def extract_text_from_xml(tag: str):
 
 `PassSequencePredict` 中以`PassInfo`结构体来存储每个可用的 LLVM Pass 的信息：
 
-```
-
-``cpp
-
+```cpp
 struct PassInfo
 {
     std::string mClassName; // Pass 的名字
@@ -873,10 +870,7 @@ std::vector<PassInfo> mPassesInfo;
 
 完成 `PassSequencePredict` 这个 LLM 加持下的 Pass 后，就可以在 `main.cpp` 中的 `TASK4_LLM` 宏定义中使用。下面的代码以传统方法中的三种示例 LLVM Pass 作为可用 Pass，然后用 `PassSequencePredict` 做 Pass 序列预测：
 
-```
-
-``cpp
-
+```cpp
 void
 opt(llvm::Module& mod)
 {
@@ -947,10 +941,7 @@ opt(llvm::Module& mod)
 
 以下是第一步 Pass 分析的系统级提示词：
 
-```
-
-``xml
-
+```xml
 <task>
   你是一位熟悉 LLVM 和 C++17 的编译优化专家，精通 LLVM IR、LLVM Pass 和相关优化技术。你可以深入分析用 C++17 和 LLVM 库编写的 LLVM Pass 代码，并准确解释其功能。
   <instructions>

@@ -182,10 +182,7 @@ mkdocs serve -a 127.0.0.1:8000
 
 提交前建议至少执行一次严格构建：
 
-```
-
-``shell
-
+```shell
 # Linux/MacOS
 
 source .venv/bin/activate NO_MKDOCS_2_WARNING=1 mkdocs build --strict
