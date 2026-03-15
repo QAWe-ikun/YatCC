@@ -28,31 +28,29 @@ Containers 对实验项目进行构造，同学们将体会到使用助教提前
 
 由于我们的代码仍处于不断更新与完善的阶段，同学们在实验发布或更新时需要重新拉取位于 Github 上的代码。
 
+<!-- prettier-ignore -->
 1. 在线实验平台更新
 
-   若是使用我们提供的
-   [YatCC-OL 在线实验平台](https://ol.yatcc.arcsysu.cn/)，当实验更新时，同学们需要在实验平台上使用
-   `Ctrl + ~` 唤出终端，使用以下指令保存当前修改并更新代码：
+    若是使用我们提供的 [YatCC-OL 在线实验平台](https://ol.yatcc.arcsysu.cn/)，当实验更新时，同学们需要在实验平台上使用 `Ctrl + ~` 唤出终端，使用以下指令保存当前修改并更新代码：
 
-   ```shell
-   git fetch origin main
-   git reset --soft origin/main
-   git stash
-   git stash pop
-   ```
+    ```shell
+    git fetch origin main
+    git reset --soft origin/main
+    git stash
+    git stash pop
+    ```
 
-2. 本地更新若当前仓库使用通过 `Download ZIP` 直接下载源代码，此时
-   `/path/to/YatCC` 目录下不包含 `.git`
-   文件夹，此时我们需要使用以下代码跟踪远端代码仓库并拉取代码：
+2. 本地更新
 
-   ```shell
-   git init
-   git branch -m main
-   git remote add origin https://ghfast.top/https://github.com/arcsysu/YatCC.git
-   ```
+    若当前仓库使用通过 `Download ZIP` 直接下载源代码，此时 `/path/to/YatCC` 目录下不包含 `.git` 文件夹，我们需要使用以下代码跟踪远端代码仓库并拉取代码：
 
-   完成上述操作后，YatCC 目录下会出现 `.git`
-   文件夹，说明当前项目已关联远端代码仓库。
+    ```shell
+    git init
+    git branch -m main
+    git remote add origin https://ghfast.top/https://github.com/arcsysu/YatCC.git
+    ```
+
+    完成上述操作后，YatCC 目录下会出现 `.git` 文件夹，说明当前项目已关联远端代码仓库。
 
 完成上述操作后，实验代码已和远端代码仓库同步，同学们可以继续开始实验。
 
@@ -141,14 +139,15 @@ set(TASK4_REVIVE OFF)
 
 同学们完成代码撰写和测试后，可以使用框架提供的打包脚本实现作业打包。打包与提交作业的步骤如下（以 task1 提交为例）：
 
+<!-- prettier-ignore -->
 1. 撰写实验报告，以 PDF 格式将报告上传至 `/YatCC/task/1`
-   文件夹内（使用在线代码空间的同学可以在左侧资源管理器的对应文件夹点击右键，选择“Upload”上传文件；或者直接将待传输文件的图标从本地拖动到网页的对应文件夹）。
+    文件夹内（使用在线代码空间的同学可以在左侧资源管理器的对应文件夹点击右键，选择“Upload”上传文件；或者直接将待传输文件的图标从本地拖动到网页的对应文件夹）。
 
-![packing_1](../images/howtouse/packing_1.png)
+    ![packing_1](../images/howtouse/packing_1.png)
 
-1. 使用打包脚本将 `/YatCC/task/1` 文件夹打包，打包后的文件位于
-   `/YatCC/build/task/task1.0123456789-某某某.tar.xz`。
+2. 使用打包脚本将 `/YatCC/task/1` 文件夹打包，打包后的文件位于
+    `/YatCC/build/task/task1.0123456789-某某某.tar.xz`。
 
-![packing_1](../images/howtouse/packing_2.png)
+    ![packing_1](../images/howtouse/packing_2.png)
 
-1. 将打包后的文件夹下载至本地（在对应文件夹点击右键，选择“Download”下载文件），提交到超算习堂作业提交处。建议同学们在提交前将打包文件解压一遍，查看其中是否包含实验报告。
+3. 将打包后的文件夹下载至本地（在对应文件夹点击右键，选择“Download”下载文件），提交到超算习堂作业提交处。建议同学们在提交前将打包文件解压一遍，查看其中是否包含实验报告。
