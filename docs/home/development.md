@@ -69,12 +69,11 @@ pip install mkdocs mkdocs-material
 
 ### 文档提交前格式修正集成功能
 
-1. 第一次使用（仅需一次）在仓库根目录执行：npm.cmd install
-2. 日常提交前只处理你这次改动过的文档（速度快）：npm.cmd run docs:format
-3. 只整理某一个文件例如只整理 Task4 的 overview：npm.cmd run docs:format --
-   docs/task4_doc/overview.md
-4. 全量整理整个 docs npm.cmd run docs:format:all
-5. 已经装过依赖，想跳过 install npm.cmd run docs:format -- --no-install
+1. 第一次使用（仅需一次）在仓库根目录执行：`npm.cmd install`
+2. 日常提交前只处理你这次改动过的文档（速度快）：`npm.cmd run docs:format`
+3. 只整理某一个文件例如只整理 Task4 的 overview：`npm.cmd run docs:format -- docs/task4_doc/overview.md`
+4. 全量整理整个 docs：`npm.cmd run docs:format:all`
+5. 已经装过依赖，想跳过 install：`npm.cmd run docs:format -- --no-install`
 
 !!! tip "优先复用现有写法"
 
