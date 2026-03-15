@@ -9,20 +9,25 @@
 
 !!! note "预览无误、通过严格构建后再提交"
 
-    先本地预览，再做严格构建检查，最后再提交。
+    先本地预览，再做严格构建检查与格式检查，最后再提交。
     这样能尽早发现导航、链接、Markdown 语法和样式覆盖带来的问题。
 
 ## 环境配置
 
-本站使用 Mkdocs 构建，请确保已经安装 Python 并将可执行文件添加到 PATH 环境变量。参考：
+本站使用 Mkdocs 构建，并使用相关工具以规范文档格式，请确保已经安装 Python、npm 和文档项目所依赖的软件包，并将可执行文件添加到 PATH 环境变量。参考：
 
 > [Python 安装](https://www.python.org/downloads/)
+>
 > [MkDocs 安装](https://www.mkdocs.org/user-guide/installation/)
+>
+> [npm 安装](https://nodejs.org/en/download)（npm 通常与 Node.js 捆绑）
 
 安装好 Python 后，可以将 MkDocs 安装到虚拟环境下，在文档**根目录**执行：
 
 ```shell
-python -m venv .venv
+# cd <文档项目根目录>
+
+python -m venv .venv # 创建 Python 虚拟环境，推荐 3.13 版本
 ```
 
 进入虚拟环境，执行
@@ -39,6 +44,20 @@ source ./.venv/bin/activate
 
 ```shell
 pip install mkdocs mkdocs-material
+```
+
+如果使用 uv 管理 Python 环境，可快速创建 Python 虚拟环境并安装软件包：
+
+```shell
+# cd <文档项目根目录>
+
+uv sync
+```
+
+markdown 文档规范化工具可使用 npm 快速安装：
+
+```shell
+npm install
 ```
 
 ## 文档编写指南
@@ -213,7 +232,8 @@ source .venv/bin/activate NO_MKDOCS_2_WARNING=1 mkdocs build --strict
 2. 本地运行 `mkdocs serve` 预览
 3. 执行 `mkdocs build --strict` 做整站检查
 4. 确认导航、链接和页面样式都正常
-5. 再进行 git 提交
+5. 格式化新增/修改的 markdown 文档
+6. 再进行 git 提交
 
 !!! danger "不要提交误下载或未引用的大文件"
 
