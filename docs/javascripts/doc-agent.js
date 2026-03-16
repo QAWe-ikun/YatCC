@@ -3,9 +3,9 @@ import { marked } from 'https://esm.sh/marked@15.0.7';
 import DOMPurify from 'https://esm.sh/dompurify@3.2.6';
 
 const OPENAI_CONFIG = {
-  baseURL: 'https://api.deepseek.com',
-  apiKey: 'sk-f5393eefb65648f5beed802ba3be1179',
-  model: 'deepseek-chat',
+  baseURL: 'https://aihub.arcsysu.cn/v1',
+  apiKey: 'sk-lDc9yRMvfPzpxXKuuXB2LA',
+  model: 'glm-5',
 };
 const MAX_HISTORY_TURNS = 6;
 const MAX_CONTEXT_DOCS = 6;
