@@ -1,11 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@500;700&family=Noto+Serif+SC:wght@600;700&display=swap');
-
 @font-face {
   font-family: 'JetBrains Mono Local';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../assets/fonts/JetBrainsMono-Regular.ttf') format('truetype');
+  src: url('../assets/fonts/JetBrainsMono-Regular.woff2') format('woff2'),
+       url('../assets/fonts/JetBrainsMono-Regular.ttf') format('truetype');
 }
 
 @font-face {
@@ -13,7 +12,8 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('../assets/fonts/JetBrainsMono-SemiBold.ttf') format('truetype');
+  src: url('../assets/fonts/JetBrainsMono-SemiBold.woff2') format('woff2'),
+       url('../assets/fonts/JetBrainsMono-SemiBold.ttf') format('truetype');
 }
 
 @font-face {
@@ -26,9 +26,9 @@
 }
 
 :root {
-  --yat-font-text: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --yat-font-heading: 'Noto Serif SC', 'Source Han Serif SC', serif;
-  --yat-font-code: 'JetBrains Mono Local', 'Noto Sans SC Local', 'Noto Sans SC', 'SFMono-Regular', Consolas, monospace;
+  --yat-font-text: 'Noto Sans SC Local', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --yat-font-heading: 'Noto Sans SC Local', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --yat-font-code: 'JetBrains Mono Local', 'Noto Sans SC Local', 'SFMono-Regular', Consolas, monospace;
 }
 
 body,
