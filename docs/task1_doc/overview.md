@@ -145,10 +145,10 @@ eof ''  Loc=<./functional-0/000_main.sysu.c:3:2>
 
 1. 打包提交
 
-   完成实验后，将实验报告上传到 `/YatCC/task/task1`，然后构建
+   完成实验后，将实验报告上传到 `/YatCC/task/task1` 目录下，然后在 Cmake 构建
    `PROJECT OUTLINE/YatCC/task/task1-score`
    进行实验一源代码打包，打包结果将保存于 `/YatCC/build/task`
-   中。请将打包好的源代码提交给助教，我们会在后台进行隐藏测例的评测并汇总分数。
+   中。请将打包好的源代码提交至超算习堂，成绩以最终评测方式为准。
 
    ![pack task1](../images/task1/task1pack.png)
 
