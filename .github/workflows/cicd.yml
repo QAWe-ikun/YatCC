@@ -21,7 +21,7 @@ jobs:
             --max-time 30 \
             --retry 2 \
             --retry-delay 3 \
-            -X POST https://portal.m.arcsysu.cn/trigger/docs_yatcc \
+            -X POST https://portal.m.arcsysu.cn/trigger/docs-yatcc \
             -H "X-API-KEY: ${{ secrets.TRIGGER_KEY }}" \
             -H "Content-Type: application/json"; then
             echo "External deployment trigger succeeded."
