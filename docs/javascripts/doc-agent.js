@@ -4,8 +4,8 @@ import DOMPurify from 'https://esm.sh/dompurify@3.2.6';
 
 const OPENAI_CONFIG = {
   baseURL: 'https://aihub.arcsysu.cn/v1',
-  apiKey: 'sk-lDc9yRMvfPzpxXKuuXB2LA',
-  model: 'deepseek-chat',
+  apiKey: 'sk-9XaSTHxAgF-KryeGsCUqMQ',
+  model: 'glm-5',
 };
 const MAX_HISTORY_TURNS = 6;
 const MAX_CONTEXT_DOCS = 6;
