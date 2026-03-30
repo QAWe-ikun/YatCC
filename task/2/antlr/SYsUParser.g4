@@ -133,7 +133,10 @@ initDeclarator
 
 typeSpecifier
     :   Void
+    |   Char
     |   Int
+    |   Long
+    |   Long Long    // long long
     ;
 
 typeQualifier

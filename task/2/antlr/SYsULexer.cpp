@@ -16,6 +16,8 @@ static const std::unordered_map<std::string, size_t> kClangTokens{
   { "int", kInt },
   { "void", kVoid },
   { "const", kConst },
+  { "char", kChar },
+  { "long", kLong },
   // 标识符和常量
   { "identifier", kIdentifier },
   { "numeric_constant", kConstant },

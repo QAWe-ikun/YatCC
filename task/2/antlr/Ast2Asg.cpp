@@ -89,10 +89,19 @@ Ast2Asg::operator()(ast::DeclarationSpecifiersContext* ctx)
           ret.first = Type::Spec::kInt;
         else if (p->Void())
           ret.first = Type::Spec::kVoid;
+        else if (p->Char())
+          ret.first = Type::Spec::kChar;
+        else if (p->Long().size() == 2)  // long long
+          ret.first = Type::Spec::kLongLong;
+        else if (p->Long().size() == 1)  // long
+          ret.first = Type::Spec::kLong;
         else
           ABORT(); // 未知的类型说明符
       }
-
+      else if (ret.first == Type::Spec::kLong && p->Long().size() == 1) {
+        // long long 的情况：第一个 long 已处理，第二个 long
+        ret.first = Type::Spec::kLongLong;
+      }
       else
         ABORT(); // 重复的类型说明符
     }
@@ -640,7 +649,15 @@ Ast2Asg::operator()(ast::PostfixExpressionContext* ctx)
   }
 
   // 处理后缀表达式
-  auto base = self(dynamic_cast<ast::PrimaryExpressionContext*>(children[0]));
+  // children[0] 可能是 PrimaryExpressionContext 或 PostfixExpressionContext
+  Expr* base = nullptr;
+  if (auto primary = dynamic_cast<ast::PrimaryExpressionContext*>(children[0])) {
+    base = self(primary);
+  } else if (auto postfix = dynamic_cast<ast::PostfixExpressionContext*>(children[0])) {
+    base = self(postfix);
+  } else {
+    ABORT();
+  }
 
   for (unsigned i = 1; i < children.size(); ++i) {
     if (auto p = dynamic_cast<antlr4::tree::TerminalNode*>(children[i])) {

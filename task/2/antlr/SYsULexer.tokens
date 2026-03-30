@@ -56,3 +56,5 @@ MinusMinus=55
 Arrow=56
 Dot=57
 Const=58
+Char=59
+Long=60
