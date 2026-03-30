@@ -1,10 +1,10 @@
 # 你的学号
-set(STUDENT_ID "23336118")
+set(STUDENT_ID "12345678")
 # 你的姓名
-set(STUDENT_NAME "李伟嘉")
+set(STUDENT_NAME "某某某")
 
 # 实验一的完成方式："flex"或"antlr"
-set(TASK1_WITH "flex")
+set(TASK1_WITH "antlr")
 # 实验一的日志级别，级别从低到高为0-3
 set(TASK1_LOG_LEVEL 3)
 
