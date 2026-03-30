@@ -5,6 +5,7 @@
 
 static std::ofstream outFile;
 
+// 转义字符串中的特殊字符
 static std::string
 escape(std::string_view sv)
 {
@@ -48,15 +49,34 @@ escape(std::string_view sv)
   return result;
 }
 
+// 打印 token 到输出文件
 void
 print_token()
 {
-  outFile << lex::id2str(lex::g.mId) << " \'" << escape(lex::g.mText) << "\'";
-  if (lex::g.mStartOfLine)
-    outFile << "\t[StartOfLine]";
-  if (lex::g.mLeadingSpace)
-    outFile << "\t[LeadingSpace]";
-  outFile << "\tLoc=<0:0>\n";
+  // 输出 token 类型和文本
+  if (lex::g.mId == lex::Id::YYEOF) {
+    outFile << lex::id2str(lex::g.mId) << " ''";
+  } else {
+    outFile << lex::id2str(lex::g.mId) << " '" << escape(lex::g.mText) << "'";
+  }
+  
+  // 输出标志
+  if (lex::g.mId != lex::Id::YYEOF) {
+    if (lex::g.mStartOfLine) {
+      outFile << "\t[StartOfLine]";
+    }
+    if (lex::g.mLeadingSpace) {
+      outFile << " [LeadingSpace]";
+    }
+    if (!lex::g.mStartOfLine && !lex::g.mLeadingSpace) {
+      outFile << "\t";
+    }
+  } else {
+    outFile << "\t";
+  }
+  
+  // 输出位置信息 - 使用 mTokenColumn 而不是 mColumn
+  outFile << " Loc=<" << lex::g.mFile << ":" << lex::g.mLine << ":" << lex::g.mTokenColumn << ">\n";
   outFile << std::flush;
 }
 
@@ -84,10 +104,18 @@ main(int argc, char* argv[])
   std::cout << "输入 '" << argv[1] << std::endl;
   std::cout << "输出 '" << argv[2] << std::endl;
 
+  // 初始化全局状态
+  lex::g.mFile = argv[1];
+  lex::g.mLine = 1;
+  lex::g.mColumn = 1;
+  lex::g.mStartOfLine = true;
+  lex::g.mLeadingSpace = false;
+
   // 这个循环完成词法分析，yylex()中会调用print_token()，从而向
   // 输出文件中写入词法分析结果。
   while (yylex())
     ;
 
   fclose(yyin);
+  return 0;
 }

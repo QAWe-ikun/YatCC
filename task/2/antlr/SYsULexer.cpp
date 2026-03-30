@@ -12,21 +12,76 @@ using namespace SYsULexerTokens;
 
 static const std::unordered_map<std::string, size_t> kClangTokens{
   { "eof", antlr4::Token::EOF },
+  // 类型关键字
   { "int", kInt },
+  { "void", kVoid },
+  { "const", kConst },
+  // 标识符和常量
   { "identifier", kIdentifier },
+  { "numeric_constant", kConstant },
+  // 括号
   { "l_paren", kLeftParen },
   { "r_paren", kRightParen },
-  { "return", kReturn },
-  { "r_brace", kRightBrace },
   { "l_brace", kLeftBrace },
-  { "numeric_constant", kConstant },
+  { "r_brace", kRightBrace },
+  { "l_square", kLeftBracket },
+  { "r_square", kRightBracket },
+  // 分隔符
   { "semi", kSemi },
+  { "comma", kComma },
+  // 赋值运算符
   { "equal", kEqual },
+  { "plusequal", kPlusEqual },
+  { "minusequal", kMinusEqual },
+  { "starequal", kStarEqual },
+  { "slashequal", kSlashEqual },
+  { "percentequal", kPercentEqual },
+  { "ampequal", kAmpEqual },
+  { "pipeequal", kPipeEqual },
+  { "caretequal", kCaretEqual },
+  { "lesslessequal", kLessLessEqual },
+  { "greatergreaterequal", kGreaterGreaterEqual },
+  // 算术运算符
   { "plus", kPlus },
   { "minus", kMinus },
-  { "comma", kComma },
-  { "l_square", kLeftBracket },
-  { "r_square", kRightBracket }
+  { "star", kStar },
+  { "slash", kSlash },
+  { "percent", kPercent },
+  { "plusplus", kPlusPlus },
+  { "minusminus", kMinusMinus },
+  // 比较运算符
+  { "less", kLess },
+  { "greater", kGreater },
+  { "lessequal", kLessEqual },
+  { "greaterequal", kGreaterEqual },
+  { "equalequal", kEqualEqual },
+  { "exclaimequal", kExclaimEqual },
+  // 逻辑运算符
+  { "ampamp", kAmpAmp },
+  { "pipepipe", kPipePipe },
+  { "exclaim", kExclaim },
+  // 位运算符
+  { "amp", kAmp },
+  { "pipe", kPipe },
+  { "caret", kCaret },
+  { "tilde", kTilde },
+  { "lessless", kLessLess },
+  { "greatergreater", kGreaterGreater },
+  // 条件运算符
+  { "question", kQuestion },
+  { "colon", kColon },
+  // 成员访问
+  { "arrow", kArrow },
+  { "dot", kDot },
+  // 控制语句关键字
+  { "return", kReturn },
+  { "if", kIf },
+  { "else", kElse },
+  { "while", kWhile },
+  { "do", kDo },
+  { "for", kFor },
+  { "break", kBreak },
+  { "continue", kContinue }
 };
 
 } // namespace
