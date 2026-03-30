@@ -569,7 +569,7 @@ def score_one(
             if not osp.exists(std_answer_path):
                 output = "没有可参考的标准答案"
                 fprint(fp, "标准参考答案文件不存在：", std_answer_path)
-                raise Error()
+                raise Error() 
 
             # 如果没有 output.json 文件，零分
             judge_answer_path = cases_helper.of_case_bindir("output.json", case)
