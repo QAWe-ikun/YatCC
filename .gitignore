@@ -2,6 +2,8 @@ build/
 tmp/
 env.*
 
+reports/
+
 **/.antlr
 **/__pycache__
 
