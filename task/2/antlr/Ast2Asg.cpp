@@ -998,19 +998,15 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
   type->texp = texp;
   ret->name = std::move(name);
 
-  std::cerr << "DEBUG: FunctionDefinition name=" << ret->name << " params=" << params.size() << std::endl;
-
   // 将参数声明设置到 FunctionDecl
   for (auto paramDecl : params) {
     if (auto varDecl = paramDecl->dcst<VarDecl>()) {
-      std::cerr << "DEBUG: param name=" << varDecl->name << std::endl;
       ret->params.push_back(varDecl);
     }
   }
 
   // 函数定义在签名之后就加入符号表，以允许递归调用
   // 注意：需要在创建函数局部符号表之前，将函数添加到外层符号表
-  std::cerr << "DEBUG: mSymtbl=" << mSymtbl << std::endl;
   if (mSymtbl) {
     (*mSymtbl)[ret->name] = ret;
   }
@@ -1019,13 +1015,10 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
 
   // 将函数参数添加到函数体的符号表中
   for (auto paramDecl : ret->params) {
-    std::cerr << "DEBUG: adding param to localDecls: " << paramDecl->name << std::endl;
     localDecls[paramDecl->name] = paramDecl;
   }
 
-  std::cerr << "DEBUG: Processing body for " << ret->name << std::endl;
   ret->body = self(ctx->compoundStatement());
-  std::cerr << "DEBUG: Body done for " << ret->name << std::endl;
 
   return ret;
 }
@@ -1033,7 +1026,8 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
 Decl*
 Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
 {
-  auto [texp, name] = self(ctx->declarator(), nullptr);
+  // 先检查是否是函数类型，需要使用带参数的版本
+  auto [texp, name, params] = self(ctx->declarator(), nullptr, true);
   Decl* ret;
 
   if (auto funcType = texp->dcst<FunctionType>()) {
@@ -1046,10 +1040,11 @@ Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
     type->texp = funcType;
 
     fdecl->name = std::move(name);
-    for (auto p : funcType->params) {
-      auto paramDecl = make<VarDecl>();
-      paramDecl->type = p;
-      fdecl->params.push_back(paramDecl);
+    // 使用从 declarator 获取的参数声明（包含参数名）
+    for (auto paramDecl : params) {
+      if (auto varDecl = paramDecl->dcst<VarDecl>()) {
+        fdecl->params.push_back(varDecl);
+      }
     }
 
     if (ctx->initializer())
