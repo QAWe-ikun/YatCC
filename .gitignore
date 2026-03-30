@@ -3,6 +3,7 @@ tmp/
 env.*
 
 reports/
+chats/
 
 **/.antlr
 **/__pycache__
