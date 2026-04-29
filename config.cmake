@@ -1,7 +1,7 @@
 # 你的学号
-set(STUDENT_ID "12345678")
+set(STUDENT_ID "23336118")
 # 你的姓名
-set(STUDENT_NAME "某某某")
+set(STUDENT_NAME "李伟嘉")
 
 # 实验一的完成方式："flex"或"antlr"
 set(TASK1_WITH "antlr")

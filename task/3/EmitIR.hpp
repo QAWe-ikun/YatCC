@@ -59,4 +59,5 @@ private:
   void operator()(asg::FunctionDecl* obj);
 
   // TODO: 添加声明处理相关声明
+  void operator()(asg::VarDecl* obj);
 };

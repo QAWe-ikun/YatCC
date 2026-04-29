@@ -60,12 +60,19 @@ EmitIR::operator()(const Type* type)
 // 表达式
 //==============================================================================
 
-llvm::Value*
-EmitIR::operator()(Expr* obj)
-{
-  // TODO: 在此添加对更多表达式处理的跳转
+llvm::Value* EmitIR::operator()(Expr* obj) {
   if (auto p = obj->dcst<IntegerLiteral>())
     return self(p);
+  
+  // 添加 DeclRefExpr 处理
+  if (auto p = obj->dcst<DeclRefExpr>()) {
+    if (auto var = p->decl->dcst<VarDecl>()) {
+      // 从 var->any 获取分配的 Value
+      llvm::Value* addr = static_cast<llvm::Value*>(var->any);
+      return mCurIrb->CreateLoad(self(var->type), addr);
+    }
+  }
+  
   ABORT();
 }
 
@@ -126,18 +133,51 @@ EmitIR::operator()(ReturnStmt* obj)
 // 声明
 //==============================================================================
 
-void
-EmitIR::operator()(Decl* obj)
-{
-  // TODO: 添加变量声明处理的跳转
-
+void EmitIR::operator()(Decl* obj) {
   if (auto p = obj->dcst<FunctionDecl>())
     return self(p);
-
+  
+  // 添加 VarDecl 处理
+  if (auto p = obj->dcst<VarDecl>()) {
+    // 生成全局/局部变量
+    return self(p);
+  }
+  
   ABORT();
 }
 
 // TODO: 添加变量声明的处理
+void EmitIR::operator()(VarDecl* obj) {
+    if (mCurFunc) {
+        // 局部变量处理不变
+    } else {
+        // 全局变量处理
+        llvm::Constant* init = nullptr;
+        
+        // 处理有初始化表达式的情况
+        if (obj->init) {
+            if (auto constant = llvm::dyn_cast<llvm::Constant>(self(obj->init))) {
+                init = constant;
+            } else {
+                // 非常量初始化需要特殊处理（如运行时代码）
+                ABORT(); // 简化处理，实际需添加全局构造函数
+            }
+        } else {
+            // 无初始化表达式时，默认初始化为0
+            init = llvm::Constant::getNullValue(self(obj->type));
+        }
+        
+        // 修正链接类型：有初始值用 CommonLinkage
+        auto linkage = init ? llvm::GlobalValue::CommonLinkage 
+                            : llvm::GlobalValue::ExternalLinkage;
+        
+        auto gv = new llvm::GlobalVariable(
+            mMod, self(obj->type), false, // 非常量
+            linkage, init, obj->name);
+        
+        obj->any = gv;
+    }
+}
 
 void
 EmitIR::operator()(FunctionDecl* obj)
