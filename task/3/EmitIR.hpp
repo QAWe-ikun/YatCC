@@ -22,6 +22,10 @@ private:
   llvm::Function* mCurFunc;
   std::unique_ptr<llvm::IRBuilder<>> mCurIrb;
 
+  // 用于break/continue的循环控制
+  llvm::BasicBlock* mCurLoopCond;
+  llvm::BasicBlock* mCurLoopExit;
+
   //============================================================================
   // 类型
   //============================================================================
@@ -36,7 +40,14 @@ private:
 
   llvm::Constant* operator()(asg::IntegerLiteral* obj);
 
-  // TODO: 添加表达式处理相关声明
+  llvm::Value* operator()(asg::DeclRefExpr* obj);
+  llvm::Value* operator()(asg::BinaryExpr* obj);
+  llvm::Value* operator()(asg::ImplicitCastExpr* obj);
+  llvm::Value* operator()(asg::UnaryExpr* obj);
+  llvm::Value* operator()(asg::CallExpr* obj);
+  llvm::Value* operator()(asg::ParenExpr* obj);
+  llvm::Value* operator()(asg::InitListExpr* obj);
+  llvm::Value* operator()(asg::ImplicitInitExpr* obj);
 
   //============================================================================
   // 语句
@@ -47,8 +58,14 @@ private:
   void operator()(asg::CompoundStmt* obj);
 
   void operator()(asg::ReturnStmt* obj);
-
-  // TODO: 添加语句处理相关声明
+  void operator()(asg::DeclStmt* obj);
+  void operator()(asg::ExprStmt* obj);
+  void operator()(asg::IfStmt* obj);
+  void operator()(asg::WhileStmt* obj);
+  void operator()(asg::DoStmt* obj);
+  void operator()(asg::BreakStmt* obj);
+  void operator()(asg::ContinueStmt* obj);
+  void operator()(asg::NullStmt* obj);
 
   //============================================================================
   // 声明
@@ -58,6 +75,8 @@ private:
 
   void operator()(asg::FunctionDecl* obj);
 
-  // TODO: 添加声明处理相关声明
   void operator()(asg::VarDecl* obj);
+  
+  // 辅助函数：递归初始化数组
+  void initArray(llvm::Value* alloca, const asg::Type* type, asg::InitListExpr* list, int depth);
 };
