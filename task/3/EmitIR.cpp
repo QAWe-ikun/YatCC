@@ -1,5 +1,6 @@
 #include "EmitIR.hpp"
 #include <llvm/Transforms/Utils/ModuleUtils.h>
+#include <typeinfo>
 
 #define self (*this)
 
@@ -21,8 +22,19 @@ EmitIR::EmitIR(Obj::Mgr& mgr, llvm::LLVMContext& ctx, llvm::StringRef mid)
 llvm::Module&
 EmitIR::operator()(asg::TranslationUnit* tu)
 {
-  for (auto&& i : tu->decls)
-    self(i);
+  // 先处理全局变量（mCurFunc为nullptr时VarDecl会创建全局变量）
+  // 再处理函数
+  // 这样可以确保全局变量不会被错误地创建为局部变量
+  for (auto&& i : tu->decls) {
+    if (auto var = i->dcst<asg::VarDecl>()) {
+      self(var);
+    }
+  }
+  for (auto&& i : tu->decls) {
+    if (auto func = i->dcst<asg::FunctionDecl>()) {
+      self(func);
+    }
+  }
   return mMod;
 }
 
@@ -133,6 +145,97 @@ EmitIR::operator()(DeclRefExpr* obj)
 llvm::Value*
 EmitIR::operator()(BinaryExpr* obj)
 {
+  // 对于短路运算符，不能提前求值rhs，需要在分支内部求值
+  switch (obj->op) {
+    case BinaryExpr::kAnd: {
+      // 短路求值：lhs && rhs - 只在lhs为真时才求值rhs
+      llvm::Value* lhs = self(obj->lft);
+      llvm::Function* func = mCurIrb->GetInsertBlock()->getParent();
+      llvm::BasicBlock* rhsBB = llvm::BasicBlock::Create(mCtx, "and.rhs", func);
+      llvm::BasicBlock* falseBB = llvm::BasicBlock::Create(mCtx, "and.false", func);
+      llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(mCtx, "and.end", func);
+      
+      // 分配存储
+      llvm::Value* resultAlloca = mCurIrb->CreateAlloca(mIntTy, nullptr, "and.result");
+      
+      // 将lhs转换为i1类型
+      llvm::Value* lhsIsTrue;
+      if (lhs->getType()->isIntegerTy(1)) {
+        lhsIsTrue = lhs;
+      } else {
+        lhsIsTrue = mCurIrb->CreateICmpNE(lhs, llvm::ConstantInt::get(lhs->getType(), 0), "lhs.bool");
+      }
+      mCurIrb->CreateCondBr(lhsIsTrue, rhsBB, falseBB);
+      
+      // lhs为假的情况
+      mCurIrb->SetInsertPoint(falseBB);
+      mCurIrb->CreateStore(llvm::ConstantInt::get(mIntTy, 0), resultAlloca);
+      mCurIrb->CreateBr(mergeBB);
+      
+      // 计算rhs（只在lhs为真时执行）
+      mCurIrb->SetInsertPoint(rhsBB);
+      llvm::Value* rhsVal = self(obj->rht);
+      // 将rhsVal转换为i32
+      llvm::Value* rhsI32;
+      if (rhsVal->getType()->isIntegerTy(1)) {
+        rhsI32 = mCurIrb->CreateZExt(rhsVal, mIntTy);
+      } else {
+        rhsI32 = rhsVal;
+      }
+      mCurIrb->CreateStore(rhsI32, resultAlloca);
+      mCurIrb->CreateBr(mergeBB);
+      
+      // 加载结果
+      mCurIrb->SetInsertPoint(mergeBB);
+      return mCurIrb->CreateLoad(mIntTy, resultAlloca, "and.load");
+    }
+    case BinaryExpr::kOr: {
+      // 短路求值：lhs || rhs - 只在lhs为假时才求值rhs
+      llvm::Value* lhs = self(obj->lft);
+      llvm::Function* func = mCurIrb->GetInsertBlock()->getParent();
+      llvm::BasicBlock* rhsBB = llvm::BasicBlock::Create(mCtx, "or.rhs", func);
+      llvm::BasicBlock* trueBB = llvm::BasicBlock::Create(mCtx, "or.true", func);
+      llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(mCtx, "or.end", func);
+      
+      // 分配存储
+      llvm::Value* resultAlloca = mCurIrb->CreateAlloca(mIntTy, nullptr, "or.result");
+      
+      // 将lhs转换为i1类型
+      llvm::Value* lhsIsTrue;
+      if (lhs->getType()->isIntegerTy(1)) {
+        lhsIsTrue = lhs;
+      } else {
+        lhsIsTrue = mCurIrb->CreateICmpNE(lhs, llvm::ConstantInt::get(lhs->getType(), 0), "lhs.bool");
+      }
+      mCurIrb->CreateCondBr(lhsIsTrue, trueBB, rhsBB);
+      
+      // lhs为真的情况
+      mCurIrb->SetInsertPoint(trueBB);
+      mCurIrb->CreateStore(llvm::ConstantInt::get(mIntTy, 1), resultAlloca);
+      mCurIrb->CreateBr(mergeBB);
+      
+      // 计算rhs（只在lhs为假时执行）
+      mCurIrb->SetInsertPoint(rhsBB);
+      llvm::Value* rhsVal = self(obj->rht);
+      // 将rhsVal转换为i32
+      llvm::Value* rhsI32;
+      if (rhsVal->getType()->isIntegerTy(1)) {
+        rhsI32 = mCurIrb->CreateZExt(rhsVal, mIntTy);
+      } else {
+        rhsI32 = rhsVal;
+      }
+      mCurIrb->CreateStore(rhsI32, resultAlloca);
+      mCurIrb->CreateBr(mergeBB);
+      
+      // 加载结果
+      mCurIrb->SetInsertPoint(mergeBB);
+      return mCurIrb->CreateLoad(mIntTy, resultAlloca, "or.load");
+    }
+    default:
+      break;
+  }
+  
+  // 非短路运算符：正常求值lhs和rhs
   llvm::Value* lhs = self(obj->lft);
   llvm::Value* rhs = self(obj->rht);
   
@@ -164,72 +267,6 @@ EmitIR::operator()(BinaryExpr* obj)
       return mCurIrb->CreateICmpEQ(lhs, rhs, "cmp");
     case BinaryExpr::kNe:
       return mCurIrb->CreateICmpNE(lhs, rhs, "cmp");
-    case BinaryExpr::kAnd: {
-      // 短路求值：lhs && rhs
-      // 如果lhs为假，直接返回0；否则计算rhs
-      llvm::Function* func = mCurIrb->GetInsertBlock()->getParent();
-      llvm::BasicBlock* rhsBB = llvm::BasicBlock::Create(mCtx, "and.rhs", func);
-      llvm::BasicBlock* falseBB = llvm::BasicBlock::Create(mCtx, "and.false", func);
-      llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(mCtx, "and.end", func);
-      
-      // 将lhs转换为i1类型（如果还不是的话）
-      llvm::Value* lhsIsTrue;
-      if (lhs->getType()->isIntegerTy(1)) {
-        lhsIsTrue = lhs;
-      } else {
-        lhsIsTrue = mCurIrb->CreateICmpNE(lhs, llvm::ConstantInt::get(lhs->getType(), 0), "lhs.bool");
-      }
-      mCurIrb->CreateCondBr(lhsIsTrue, rhsBB, falseBB);
-      
-      // lhs为假的情况
-      mCurIrb->SetInsertPoint(falseBB);
-      mCurIrb->CreateBr(mergeBB);
-      
-      // 计算rhs
-      mCurIrb->SetInsertPoint(rhsBB);
-      llvm::Value* rhsVal = self(obj->rht);
-      mCurIrb->CreateBr(mergeBB);
-      
-      // 合并
-      mCurIrb->SetInsertPoint(mergeBB);
-      llvm::PHINode* phi = mCurIrb->CreatePHI(mIntTy, 2, "and.result");
-      phi->addIncoming(llvm::ConstantInt::get(mIntTy, 0), falseBB);
-      phi->addIncoming(rhsVal, rhsBB);
-      return phi;
-    }
-    case BinaryExpr::kOr: {
-      // 短路求值：lhs || rhs
-      // 如果lhs为真，直接返回1；否则计算rhs
-      llvm::Function* func = mCurIrb->GetInsertBlock()->getParent();
-      llvm::BasicBlock* rhsBB = llvm::BasicBlock::Create(mCtx, "or.rhs", func);
-      llvm::BasicBlock* trueBB = llvm::BasicBlock::Create(mCtx, "or.true", func);
-      llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(mCtx, "or.end", func);
-      
-      // 将lhs转换为i1类型（如果还不是的话）
-      llvm::Value* lhsIsTrue;
-      if (lhs->getType()->isIntegerTy(1)) {
-        lhsIsTrue = lhs;
-      } else {
-        lhsIsTrue = mCurIrb->CreateICmpNE(lhs, llvm::ConstantInt::get(lhs->getType(), 0), "lhs.bool");
-      }
-      mCurIrb->CreateCondBr(lhsIsTrue, trueBB, rhsBB);
-      
-      // lhs为真的情况
-      mCurIrb->SetInsertPoint(trueBB);
-      mCurIrb->CreateBr(mergeBB);
-      
-      // 计算rhs
-      mCurIrb->SetInsertPoint(rhsBB);
-      llvm::Value* rhsVal = self(obj->rht);
-      mCurIrb->CreateBr(mergeBB);
-      
-      // 合并
-      mCurIrb->SetInsertPoint(mergeBB);
-      llvm::PHINode* phi = mCurIrb->CreatePHI(mIntTy, 2, "or.result");
-      phi->addIncoming(llvm::ConstantInt::get(mIntTy, 1), trueBB);
-      phi->addIncoming(rhsVal, rhsBB);
-      return phi;
-    }
     case BinaryExpr::kIndex: {
       // 数组索引：lft可能是数组类型或指针类型，rht是索引
       // 使用obj->type获取元素类型（索引表达式的类型是元素类型）
@@ -596,6 +633,7 @@ void EmitIR::operator()(Decl* obj) {
 }
 
 void EmitIR::operator()(VarDecl* obj) {
+    llvm::errs() << "[DEBUG VarDecl] Processing var: " << obj->name << "\n";
     if (mCurFunc) {
         // 局部变量：在栈上分配
         auto alloca = mCurIrb->CreateAlloca(self(obj->type), nullptr, obj->name);
@@ -603,8 +641,11 @@ void EmitIR::operator()(VarDecl* obj) {
         
         // 如果有初始化表达式
         if (obj->init) {
+            llvm::errs() << "[DEBUG VarDecl] Has init\n";
             // 检查是否是InitListExpr（包括空的初始化列表 ={}）
             if (auto initList = obj->init->dcst<asg::InitListExpr>()) {
+                llvm::errs() << "[DEBUG VarDecl] It's InitListExpr, list.size=" << initList->list.size() << "\n";
+                llvm::errs() << "[DEBUG VarDecl] RTTI: " << typeid(*obj->init).name() << "\n";
                 // 数组初始化列表，需要逐个元素存储
                 initArray(alloca, obj->type, initList, 0);
             } else {
@@ -710,21 +751,28 @@ EmitIR::operator()(FunctionDecl* obj)
 void
 EmitIR::initArray(llvm::Value* alloca, const asg::Type* type, asg::InitListExpr* list, int depth)
 {
+  // 调试输出
+  llvm::errs() << "[DEBUG initArray] depth=" << depth << ", list->list.size()=" << list->list.size() << "\n";
+  
   // 获取当前维度的数组类型
   auto arrayType = type->texp->dcst<asg::ArrayType>();
   if (!arrayType) {
     // 不是数组类型，直接存储值
+    llvm::errs() << "[DEBUG initArray] Not an array type\n";
     if (list->list.empty()) {
       // 空初始化列表，存储零
       llvm::Type* ty = self(type);
       llvm::Value* zero = llvm::Constant::getNullValue(ty);
       mCurIrb->CreateStore(zero, alloca);
+      llvm::errs() << "[DEBUG initArray] Stored zero for non-array type\n";
     } else {
       llvm::Value* val = self(list->list[0]);
       mCurIrb->CreateStore(val, alloca);
     }
     return;
   }
+  
+  llvm::errs() << "[DEBUG initArray] Array type, len=" << arrayType->len << "\n";
   
   // 计算子类型
   asg::Type subType;
@@ -736,16 +784,19 @@ EmitIR::initArray(llvm::Value* alloca, const asg::Type* type, asg::InitListExpr*
   
   // 如果初始化列表为空，用零填充整个数组
   if (list->list.empty()) {
+    llvm::errs() << "[DEBUG initArray] Empty list, zero-filling entire array of " << arrayType->len << " elements\n";
     llvm::Value* zero = llvm::Constant::getNullValue(elemType);
     for (int i = 0; i < arrayType->len; ++i) {
       llvm::Value* idx = llvm::ConstantInt::get(mIntTy, i);
       llvm::Value* elemPtr = mCurIrb->CreateInBoundsGEP(elemType, alloca, idx);
       mCurIrb->CreateStore(zero, elemPtr);
+      llvm::errs() << "[DEBUG initArray]   Zero-filled element " << i << "\n";
     }
     return;
   }
   
   // 遍历初始化列表中的每个元素
+  llvm::errs() << "[DEBUG initArray] Processing " << list->list.size() << " init elements\n";
   for (size_t i = 0; i < list->list.size(); ++i) {
     auto elem = list->list[i];
     
@@ -755,13 +806,22 @@ EmitIR::initArray(llvm::Value* alloca, const asg::Type* type, asg::InitListExpr*
     
     if (auto nestedList = elem->dcst<asg::InitListExpr>()) {
       // 嵌套的初始化列表，递归处理
+      llvm::errs() << "[DEBUG initArray] Element " << i << " is InitListExpr\n";
       initArray(elemPtr, &subType, nestedList, depth + 1);
     } else if (auto implicitInit = elem->dcst<asg::ImplicitInitExpr>()) {
-      // 隐式初始化，存储零
+      // 隐式初始化，从零填充当前元素到数组末尾
+      llvm::errs() << "[DEBUG initArray] Element " << i << " is ImplicitInitExpr, zero-filling from " << i << " to " << arrayType->len << "\n";
       llvm::Value* zero = llvm::Constant::getNullValue(elemType);
-      mCurIrb->CreateStore(zero, elemPtr);
+      for (size_t j = i; j < arrayType->len; ++j) {
+        llvm::Value* idx = llvm::ConstantInt::get(mIntTy, j);
+        llvm::Value* elemPtr = mCurIrb->CreateInBoundsGEP(elemType, alloca, idx);
+        mCurIrb->CreateStore(zero, elemPtr);
+        llvm::errs() << "[DEBUG initArray]   Zero-filled element " << j << "\n";
+      }
+      return; // 完成初始化，退出
     } else {
       // 普通表达式，计算值并存储
+      llvm::errs() << "[DEBUG initArray] Element " << i << " is regular expr\n";
       llvm::Value* val = self(elem);
       mCurIrb->CreateStore(val, elemPtr);
     }
